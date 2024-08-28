@@ -62,6 +62,8 @@ export enum I18nStringKey {
 	kAdminVMButtons_ClearTurnQueue = 'kAdminVMButtons_ClearTurnQueue',
 	kAdminVMButtons_BypassTurn = 'kAdminVMButtons_BypassTurn',
 	kAdminVMButtons_IndefiniteTurn = 'kAdminVMButtons_IndefiniteTurn',
+	kAdminVMButtons_GhostTurnOn = 'kAdminVMButtons_GhostTurnOn',
+	kAdminVMButtons_GhostTurnOff = 'kAdminVMButtons_GhostTurnOff',
 
 	kAdminVMButtons_Ban = 'kAdminVMButtons_Ban',
 	kAdminVMButtons_Kick = 'kAdminVMButtons_Kick',
@@ -92,6 +94,7 @@ export enum I18nStringKey {
 	kAccountModal_ConfirmNewPassword = 'kAccountModal_ConfirmNewPassword',
 	kAccountModal_CurrentPassword = 'kAccountModal_CurrentPassword',
 	kAccountModal_ConfirmPassword = 'kAccountModal_ConfirmPassword',
+	kAccountModal_HideFlag = 'kAccountModal_HideFlag',
 
 	kAccountModal_VerifyText = 'kAccountModal_VerifyText',
 	kAccountModal_VerifyPasswordResetText = 'kAccountModal_VerifyPasswordResetText',
@@ -123,10 +126,15 @@ export type Language = {
 	};
 };
 
+export type LanguageMetadata = {
+	languageName: string;
+	flag: string; // country flag, can be blank if not applicable. will be displayed in language dropdown
+};
+
 // `languages.json`
 export type LanguagesJson = {
 	// Array of language IDs to allow loading
-	languages: Array<string>;
+	languages: {[key: string]: LanguageMetadata};
 
 	// The default language (set if a invalid language not in the languages array is set, or no language is set)
 	defaultLanguage: string;
@@ -145,7 +153,7 @@ interface StringKeyMap {
 /// our fancy internationalization helper.
 export class I18n {
 	// The language data itself
-	private langs : Map<string, Language> = new Map<string, Language>();
+	private langs : Map<string, LanguageMetadata> = new Map<string, Language>();
 	private lang: Language = fallbackLanguage;
 	private languageDropdown: HTMLSpanElement = document.getElementById('languageDropdown') as HTMLSpanElement;
 	private emitter: Emitter<I18nEvents> = createNanoEvents();
@@ -154,26 +162,21 @@ export class I18n {
 
 	// the ID of the language
 	private langId: string = fallbackId;
+
+	private regionNameRenderer = new Intl.DisplayNames(['en-US'], {type: 'region'});
 	
 	async Init() {
 		// Load language list
 		var res = await fetch("lang/languages.json");
 		if (!res.ok) {
 			alert("Failed to load languages.json: " + res.statusText);
-			this.SetLanguage(fallbackLanguage, fallbackId);
+			await this.SetLanguage(fallbackId);
 			this.ReplaceStaticStrings();
 			return;
 		}
 		var langData = await res.json() as LanguagesJson;
-		for (const langId of langData.languages) {
-			let path = `./lang/${langId}.json`;
-			let res = await fetch(path);
-			if (!res.ok) {
-				console.error(`Failed to load lang/${langId}.json: ${res.statusText}`);
-				continue;
-			}
-			let _lang = await res.json() as Language;
-			this.langs.set(langId, _lang);
+		for (const langId in langData.languages) {
+			this.langs.set(langId, langData.languages[langId]);
 		}
 		this.langs.forEach((_lang, langId) => {
 			// Add to language dropdown
@@ -181,9 +184,9 @@ export class I18n {
 			a.classList.add('dropdown-item');
 			a.href = '#';
 			a.innerText = `${_lang.flag} ${_lang.languageName}`;
-			a.addEventListener('click', (e) => {
+			a.addEventListener('click', async e => {
 				e.preventDefault();
-				this.SetLanguage(_lang, langId);
+				await this.SetLanguage(langId);
 				this.ReplaceStaticStrings();
 			});
 			this.languageDropdown.appendChild(a);
@@ -197,7 +200,7 @@ export class I18n {
 		else if (this.langs.has(browserLang)) lang = browserLang;
 		else {
 			// If the exact browser language isn't in the list, try to find a language with the same prefix
-			for (let langId of langData.languages) {
+			for (let langId in langData.languages) {
 				if (langId.split('-')[0] === browserLang.split('-')[0]) {
 					lang = langId;
 					break;
@@ -206,17 +209,40 @@ export class I18n {
 		}
 		// If all else fails, use the default language
 		if (lang === null) lang = langData.defaultLanguage;
-		this.SetLanguage(this.langs.get(lang) as Language, lang);
+		await this.SetLanguage(lang);
 		this.ReplaceStaticStrings();
 	}
 
-	private SetLanguage(lang: Language, id: string) {
+	getCountryName(code: string) : string {
+		return this.regionNameRenderer.of(code) || code;
+	}
+
+	private async SetLanguage(id: string) {
 		let lastId = this.langId;
 		this.langId = id;
+
+		let lang;
+		if (id === fallbackId) lang = fallbackLanguage;
+		else {
+			let path = `./lang/${id}.json`;
+			let res = await fetch(path);
+			if (!res.ok) {
+				console.error(`Failed to load lang/${id}.json: ${res.statusText}`);
+				await this.SetLanguage(fallbackId);
+				return;
+			}
+			lang = await res.json() as Language;
+		}
+
 		this.lang = lang;
 
-		// Only replace static strings
-		if (this.langId != lastId) this.ReplaceStaticStrings();
+		if (this.langId != lastId) {
+			// Replace static strings
+			this.ReplaceStaticStrings();
+			
+			// Update region name renderer target language
+			this.regionNameRenderer = new Intl.DisplayNames([this.langId], {type: 'region'});
+		};
 
 		// Set the language ID localstorage entry
 		if (this.langId !== fallbackId) {
@@ -272,6 +298,7 @@ export class I18n {
 			clearQueueBtnText: I18nStringKey.kAdminVMButtons_ClearTurnQueue,
 			bypassTurnBtnText: I18nStringKey.kAdminVMButtons_BypassTurn,
 			indefTurnBtnText: I18nStringKey.kAdminVMButtons_IndefiniteTurn,
+			ghostTurnBtnText: I18nStringKey.kAdminVMButtons_GhostTurnOff,
 
 			// Account modal
 			accountLoginUsernameLabel: I18nStringKey.kGeneric_Username,
@@ -292,6 +319,7 @@ export class I18n {
 			accountSettingsNewPasswordLabel: I18nStringKey.kAccountModal_NewPassword,
 			accountSettingsConfirmNewPasswordLabel: I18nStringKey.kAccountModal_ConfirmNewPassword,
 			accountSettingsCurrentPasswordLabel: I18nStringKey.kAccountModal_CurrentPassword,
+			hideFlagCheckboxLabel: I18nStringKey.kAccountModal_HideFlag,
 			updateAccountSettingsBtn: I18nStringKey.kGeneric_Update,
 			accountResetPasswordEmailLabel: I18nStringKey.kGeneric_EMail,
 			accountResetPasswordUsernameLabel: I18nStringKey.kGeneric_Username,

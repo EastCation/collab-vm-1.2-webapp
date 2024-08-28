@@ -61,6 +61,8 @@ const fallbackLanguage : Language = {
 		"kAdminVMButtons_ClearTurnQueue": "Clear Turn Queue",
 		"kAdminVMButtons_BypassTurn": "Bypass Turn",
 		"kAdminVMButtons_IndefiniteTurn": "Indefinite Turn",
+		"kAdminVMButtons_GhostTurnOn": "Ghost Turn (On)",
+		"kAdminVMButtons_GhostTurnOff": "Ghost Turn (Off)",
 
 		"kAdminVMButtons_Ban": "Ban",
 		"kAdminVMButtons_Kick": "Kick",
@@ -87,6 +89,7 @@ const fallbackLanguage : Language = {
 		"kAccountModal_ConfirmNewPassword": "Confirm New Password",
 		"kAccountModal_CurrentPassword": "Current Password",
 		"kAccountModal_ConfirmPassword": "Confirm Password",
+		"kAccountModal_HideFlag": "Hide my Country Flag",
 
 		"kMissingCaptcha": "Please fill out the captcha.",
 		"kPasswordsMustMatch": "Passwords must match.",

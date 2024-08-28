@@ -6,7 +6,8 @@
         <meta charset="utf-8"/>
         <link href="../css/style.css" rel="stylesheet" type="text/css"/>
         <link href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
-        <script src="https://kit.fontawesome.com/7add23c1ae.js" crossorigin="anonymous"></script>
+        <link rel="preload" href="../assets/NotoColorEmoji.ttf" as="font" type="font/tff" crossorigin>
+        <script src="../../node_modules/@fortawesome/fontawesome-free/js/all.min.js" crossorigin="anonymous"></script>
         <link rel="icon" href="../assets/favicon.ico">
         <meta name="description" content="A website that lets you take turns controlling online virtual machines with complete strangers!"/>
         <!-- Opengraph shit -->
@@ -140,6 +141,7 @@
                             <input id="accountSettingsConfirmNewPassword" type="password" class="form-control" name="confirmpassword"/><br/>
                             <label for="accountSettingsCurrentPassword" id="accountSettingsCurrentPasswordLabel"></label>
                             <input id="accountSettingsCurrentPassword" type="password" class="form-control" name="currentpassword" required/><br/>
+                            <input type="checkbox" id="hideFlagCheckbox" class="form-check-input"/> <label for="hideFlagCheckbox" id="hideFlagCheckboxLabel"></label><br/>
                             <button type="submit" class="btn btn-primary" id="updateAccountSettingsBtn"></button>
                         </form>
                     </div>
@@ -256,6 +258,7 @@
                     <button class="btn btn-secondary" id="bypassTurnBtn"><i class="fa-solid fa-forward"></i> <span id="bypassTurnBtnText"></span></button>
                     <button class="btn btn-secondary" id="endTurnBtn"><i class="fa-solid fa-ban"></i>  <span id="endTurnBtnText"></span></button>
                     <button class="btn btn-secondary" id="indefTurnBtn"><i class="fa-solid fa-infinity"></i> <span id="indefTurnBtnText"></span></button>
+                    <button class="btn btn-secondary" id="ghostTurnBtn"><i class="fa-solid fa-ghost"></i> <span id="ghostTurnBtnText"></span></button>
                     <button class="btn btn-secondary" id="qemuMonitorBtn" data-bs-toggle="modal" data-bs-target="#qemuMonitorModal"><i class="fa-solid fa-terminal"></i> <span id="qemuMonitorBtnText"></span></button>
                 </div>
             </div>
